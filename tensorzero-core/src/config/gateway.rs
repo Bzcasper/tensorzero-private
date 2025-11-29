@@ -46,6 +46,15 @@ pub struct AuthConfig {
     pub cache: Option<GatewayAuthCacheConfig>,
 }
 
+#[derive(Debug, Default, Deserialize, Serialize, ts_rs::TS)]
+#[ts(export)]
+#[serde(deny_unknown_fields)]
+pub struct RouterConfig {
+    pub enabled: bool,
+    pub model_path: Option<String>,
+    pub tokenizer_path: Option<String>,
+}
+
 #[derive(Debug, Default, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct UninitializedGatewayConfig {
@@ -77,6 +86,8 @@ pub struct UninitializedGatewayConfig {
     pub fetch_and_encode_input_files_before_inference: Option<bool>,
     #[serde(default)]
     pub auth: AuthConfig,
+    #[serde(default)]
+    pub router: RouterConfig,
     pub global_outbound_http_timeout_ms: Option<u64>,
 }
 
@@ -107,6 +118,7 @@ impl UninitializedGatewayConfig {
             disable_pseudonymous_usage_analytics: self.disable_pseudonymous_usage_analytics,
             fetch_and_encode_input_files_before_inference,
             auth: self.auth,
+            router: self.router,
             global_outbound_http_timeout: self
                 .global_outbound_http_timeout_ms
                 .map(|ms| Duration::milliseconds(ms as i64))
@@ -133,6 +145,7 @@ pub struct GatewayConfig {
     #[serde(default)]
     pub fetch_and_encode_input_files_before_inference: bool,
     pub auth: AuthConfig,
+    pub router: RouterConfig,
     pub global_outbound_http_timeout: Duration,
 }
 
@@ -150,6 +163,7 @@ impl Default for GatewayConfig {
             disable_pseudonymous_usage_analytics: Default::default(),
             fetch_and_encode_input_files_before_inference: Default::default(),
             auth: Default::default(),
+            router: Default::default(),
             global_outbound_http_timeout: DEFAULT_HTTP_CLIENT_TIMEOUT,
         }
     }

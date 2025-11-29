@@ -1,0 +1,14 @@
+[package]
+name = "router-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+router-core = { path = "../router-core" }
+clap = { version = "4.5", features = ["derive"] }
+criterion = "0.5"
+anyhow = "1.0"
+
+[[bench]]
+name = "routing_benchmark"
+harness = false

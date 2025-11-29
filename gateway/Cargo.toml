@@ -8,6 +8,7 @@ license.workspace = true
 [dependencies]
 tensorzero-core = { path = "../tensorzero-core" }
 tensorzero-optimizers = { path = "../tensorzero-optimizers" }
+router-core = { path = "../tensorzero-deploy/router/router-core" }
 axum = { workspace = true }
 tracing = { version = "0.1.40", features = ["log", "release_max_level_debug"] }
 tokio = { workspace = true }

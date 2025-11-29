@@ -8,6 +8,7 @@ use crate::endpoints::openai_compatible::RouterExt;
 use axum::extract::{rejection::JsonRejection, DefaultBodyLimit, FromRequest, Json, Request};
 use axum::Router;
 use moka::sync::Cache;
+use router_core::NeuralRouter;
 use serde::de::DeserializeOwned;
 use sqlx::postgres::PgPoolOptions;
 use tensorzero_auth::postgres::AuthResult;
@@ -134,6 +135,7 @@ pub struct AppStateData {
     pub deferred_tasks: TaskTracker,
     /// Optional cache for TensorZero API key authentication
     pub auth_cache: Option<Cache<String, AuthResult>>,
+    pub router: Option<Arc<NeuralRouter>>,
     // Prevent `AppStateData` from being directly constructed outside of this module
     // This ensures that `AppStateData` is only ever constructed via explicit `new` methods,
     // which can ensure that we update global state.
@@ -211,6 +213,7 @@ impl GatewayHandle {
                 postgres_connection_info,
                 deferred_tasks: TaskTracker::new(),
                 auth_cache,
+                router: None,
                 _private: (),
             },
             cancel_token,
@@ -255,7 +258,35 @@ impl GatewayHandle {
                 )
                 .await?;
         }
+
         let auth_cache = create_auth_cache_from_config(&config);
+        let router = if config.gateway.router.enabled {
+            let model_path = config.gateway.router.model_path.as_deref().ok_or_else(|| {
+                Error::new(ErrorDetails::Config {
+                    message: "Router enabled but model_path not provided".to_string(),
+                })
+            })?;
+            let tokenizer_path =
+                config
+                    .gateway
+                    .router
+                    .tokenizer_path
+                    .as_deref()
+                    .ok_or_else(|| {
+                        Error::new(ErrorDetails::Config {
+                            message: "Router enabled but tokenizer_path not provided".to_string(),
+                        })
+                    })?;
+            Some(Arc::new(
+                NeuralRouter::new(model_path, tokenizer_path).map_err(|e| {
+                    Error::new(ErrorDetails::InternalError {
+                        message: format!("Failed to initialize router: {e}"),
+                    })
+                })?,
+            ))
+        } else {
+            None
+        };
         Ok(Self {
             app_state: AppStateData {
                 config,
@@ -264,6 +295,7 @@ impl GatewayHandle {
                 postgres_connection_info,
                 deferred_tasks: TaskTracker::new(),
                 auth_cache,
+                router,
                 _private: (),
             },
             cancel_token,

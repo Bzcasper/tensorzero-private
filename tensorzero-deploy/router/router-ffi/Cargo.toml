@@ -1,0 +1,16 @@
+[package]
+name = "router-ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+router-core = { path = "../router-core" }
+napi = { version = "2.16", features = ["async"] }
+napi-derive = "2.16"
+anyhow = "1.0"
+
+[build-dependencies]
+napi-build = "2.1"

@@ -8,6 +8,7 @@ use futures::FutureExt;
 use futures_core::FusedStream;
 use indexmap::IndexMap;
 use metrics::counter;
+use router_core::NeuralRouter;
 use secrecy::SecretString;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -43,9 +44,9 @@ use crate::inference::types::resolved_input::LazyResolvedInput;
 use crate::inference::types::{
     collect_chunks, ChatInferenceDatabaseInsert, ChatInferenceResultChunk, CollectChunksArgs,
     ContentBlockChatOutput, ContentBlockChunk, FetchContext, FinishReason, InferenceResult,
-    InferenceResultChunk, InferenceResultStream, Input, InternalJsonInferenceOutput,
+    InferenceResultChunk, InferenceResultStream, Input, InputMessageContent, InternalJsonInferenceOutput,
     JsonInferenceDatabaseInsert, JsonInferenceOutput, JsonInferenceResultChunk,
-    ModelInferenceResponseWithMetadata, RequestMessage, ResolvedInput, TextChunk, Usage,
+    ModelInferenceResponseWithMetadata, RequestMessage, ResolvedInput, Role, TextChunk, Usage,
 };
 use crate::jsonschema_util::DynamicJSONSchema;
 use crate::minijinja_util::TemplateConfig;
@@ -164,6 +165,7 @@ pub async fn inference_handler(
         clickhouse_connection_info,
         postgres_connection_info,
         deferred_tasks,
+        router,
         ..
     }): AppState,
     api_key_ext: Option<Extension<RequestApiKeyExtension>>,
@@ -177,6 +179,7 @@ pub async fn inference_handler(
         deferred_tasks,
         params,
         api_key_ext,
+        router,
     ))
     .await?;
     match inference_output {
@@ -216,6 +219,7 @@ pub struct InferenceIds {
     pub episode_id: Uuid,
 }
 
+#[expect(clippy::too_many_arguments)]
 #[instrument(
     name="inference",
     skip_all
@@ -236,6 +240,7 @@ pub async fn inference(
     deferred_tasks: TaskTracker,
     mut params: Params,
     api_key_ext: Option<Extension<RequestApiKeyExtension>>,
+    router: Option<Arc<NeuralRouter>>,
 ) -> Result<InferenceOutput, Error> {
     let span = tracing::Span::current();
     if let Some(function_name) = &params.function_name {
@@ -342,6 +347,29 @@ pub async fn inference(
         &function,
         function_name.clone(),
     )?;
+
+    // Use neural router to select variant if available and multiple candidates exist
+    if let Some(router) = &router {
+        if candidate_variants.len() > 1 {
+            let text = extract_text_from_input(&params.input);
+            if let Ok(scores) = router.route(&text) {
+                if !scores.is_empty() {
+                    let mut sorted_keys: Vec<&String> = candidate_variants.keys().collect();
+                    sorted_keys.sort();
+                    if let Some((best_index, _)) = scores
+                        .iter()
+                        .enumerate()
+                        .max_by(|a, b| a.1.partial_cmp(b.1).unwrap_or(std::cmp::Ordering::Equal))
+                    {
+                        if best_index < sorted_keys.len() {
+                            let best_variant = sorted_keys[best_index].clone();
+                            candidate_variants.retain(|k, _| *k == best_variant);
+                        }
+                    }
+                }
+            }
+        }
+    }
     let templates = &templates;
 
     // Increment the request count if we're not in dryrun mode
@@ -1538,6 +1566,21 @@ fn prepare_candidate_variants(
     Ok(needs_sampling)
 }
 
+fn extract_text_from_input(input: &Input) -> String {
+    let mut text = String::new();
+    for message in &input.messages {
+        if message.role == Role::User {
+            for content in &message.content {
+                if let InputMessageContent::Text(t) = content {
+                    text.push_str(&t.text);
+                    text.push(' ');
+                }
+            }
+        }
+    }
+    text.trim().to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1933,6 +1976,40 @@ mod tests {
                 .expect("test data should be valid")
             ))
         );
+    }
+
+    #[test]
+    fn test_extract_text_from_input() {
+        let input = Input {
+            messages: vec![
+                RequestMessage {
+                    role: Role::System,
+                    content: vec![InputMessageContent::Text(TextChunk {
+                        text: "System message".to_string(),
+                    })],
+                },
+                RequestMessage {
+                    role: Role::User,
+                    content: vec![
+                        InputMessageContent::Text(TextChunk {
+                            text: "Hello".to_string(),
+                        }),
+                        InputMessageContent::Text(TextChunk {
+                            text: " world".to_string(),
+                        }),
+                    ],
+                },
+                RequestMessage {
+                    role: Role::Assistant,
+                    content: vec![InputMessageContent::Text(TextChunk {
+                        text: "Assistant message".to_string(),
+                    })],
+                },
+            ],
+            system: None,
+        };
+        let text = extract_text_from_input(&input);
+        assert_eq!(text, "Hello world");
     }
 
     #[test]

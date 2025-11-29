@@ -876,6 +876,7 @@ impl Client {
                         // We currently ban auth-enabled configs in embedded gateway mode,
                         // so we don't have an API key here
                         None,
+                        None,
                     ))
                     .await
                     .map_err(err_to_http)?;

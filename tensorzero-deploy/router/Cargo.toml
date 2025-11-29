@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "router-core",
+    "router-ffi",
+    "router-wasm",
+    "router-cli",
+]
+resolver = "2"

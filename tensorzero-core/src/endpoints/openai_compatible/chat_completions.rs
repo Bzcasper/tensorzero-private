@@ -94,6 +94,7 @@ pub async fn chat_completions_handler(
         deferred_tasks,
         params,
         api_key_ext,
+        None,
     ))
     .await?;
 

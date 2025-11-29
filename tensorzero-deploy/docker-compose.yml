@@ -1,0 +1,71 @@
+services:
+  # 1. TensorZero Gateway
+  gateway:
+    image: tensorzero/gateway
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./config:/app/config:ro
+    command: --config-file /app/config/tensorzero.toml
+    environment:
+      - TENSORZERO_CLICKHOUSE_URL=http://default:${CLICKHOUSE_PASSWORD}@clickhouse:8123/tensorzero
+      - TENSORZERO_POSTGRES_URL=${DATABASE_URL}
+      # Pass through specific keys from your .env
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - SAMBANOVA_API_KEY=${SAMBANOVA_API_KEY}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: always
+
+  # 2. ClickHouse (Required for metrics/observability)
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    environment:
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_USER=default
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. TensorZero UI (Dashboard)
+  ui:
+    image: tensorzero/ui
+    ports:
+      - "4000:4000"
+    environment:
+      - TENSORZERO_GATEWAY_URL=http://gateway:3000
+      - TENSORZERO_CLICKHOUSE_URL=http://default:${CLICKHOUSE_PASSWORD}@clickhouse:8123/tensorzero
+      - TENSORZERO_POSTGRES_URL=${DATABASE_URL}
+    depends_on:
+      - gateway
+    volumes:
+      - ./config:/app/config:ro
+
+  # 4. Ngrok (Expose to internet)
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: http gateway:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - 4040:4040 # Ngrok inspection interface
+    depends_on:
+      - gateway
+
+volumes:
+  clickhouse_data:

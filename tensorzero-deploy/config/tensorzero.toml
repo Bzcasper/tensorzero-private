@@ -1,0 +1,241 @@
+[gateway]
+bind_address = "0.0.0.0:3000"
+disable_pseudonymous_usage_analytics = true
+
+[router]
+model_path = "../router.onnx"
+tokenizer_path = "../tokenizer.json"
+
+# ==================================================================
+# MODEL DEFINITIONS (Providers & Routing)
+# ==================================================================
+
+# --- 1. CEREBRAS (Instant Speed - Best for Drafting) ---
+[models.cerebras_llama70b]
+routing = ["cerebras"]
+
+[models.cerebras_llama70b.providers.cerebras]
+type = "openai"
+api_base = "https://api.cerebras.ai/v1"
+model_name = "llama3.3-70b" # Latest supported on Cerebras
+api_key_location = "env::CEREBRAS_API_KEY"
+
+# --- 2. SAMBANOVA (Massive Reasoning - Best for Judging) ---
+[models.sambanova_405b]
+routing = ["sambanova"]
+
+[models.sambanova_405b.providers.sambanova]
+type = "openai"
+api_base = "https://api.sambanova.ai/v1"
+model_name = "Meta-Llama-3.1-405B-Instruct"
+api_key_location = "env::SAMBANOVA_API_KEY"
+
+# --- 3. GROQ (Reliable Speed) ---
+[models.groq_llama33]
+routing = ["groq"]
+
+[models.groq_llama33.providers.groq]
+type = "groq"
+model_name = "llama-3.3-70b-versatile"
+api_key_location = "env::GROQ_API_KEY"
+
+# --- 4. MISTRAL (High Quality European Model) ---
+[models.mistral_large]
+routing = ["mistral"]
+
+[models.mistral_large.providers.mistral]
+type = "mistral"
+model_name = "mistral-large-latest"
+api_key_location = "env::MISTRAL_API_KEY"
+
+# --- 5. DEEPSEEK (Best Value/Logic) ---
+[models.deepseek_v3]
+routing = ["deepseek"]
+
+[models.deepseek_v3.providers.deepseek]
+type = "deepseek"
+model_name = "deepseek-chat"
+api_key_location = "env::DEEPSEEK_API_KEY"
+
+# --- 6. TOGETHER AI (Qwen 2.5 - SOTA Open Source) ---
+[models.qwen_25_together]
+routing = ["together"]
+
+[models.qwen_25_together.providers.together]
+type = "together"
+model_name = "Qwen/Qwen2.5-72B-Instruct-Turbo"
+api_key_location = "env::TOGETHER_API_KEY"
+
+# --- 7. PAID MODELS (Gemini & Grok) ---
+[models.gemini_pro]
+routing = ["google"]
+[models.gemini_pro.providers.google]
+type = "google_ai_studio_gemini"
+model_name = "gemini-1.5-pro"
+api_key_location = "env::GEMINI_API_KEY"
+
+[models.grok_2]
+routing = ["xai"]
+[models.grok_2.providers.xai]
+type = "xai"
+model_name = "grok-2-1212"
+api_key_location = "env::GROK_API_KEY"
+
+# --- 8. OPENROUTER FREE MODELS ---
+[models.liquid_lfm_40b]
+routing = ["openrouter_liquid"]
+[models.liquid_lfm_40b.providers.openrouter_liquid]
+type = "openrouter"
+model_name = "liquid/lfm-40b"
+api_key_location = "env::OPENROUTER_API_KEY"
+
+[models.gemini_2_flash_free]
+routing = ["openrouter_gemini_free"]
+[models.gemini_2_flash_free.providers.openrouter_gemini_free]
+type = "openrouter"
+model_name = "google/gemini-2.0-flash-exp:free"
+api_key_location = "env::OPENROUTER_API_KEY"
+
+
+# ==================================================================
+# FUNCTION 1: STANDARD CHAT (Load Balanced)
+# ==================================================================
+[functions.chat]
+type = "chat"
+
+# --- Variants ---
+[functions.chat.variants.cerebras]
+type = "chat_completion"
+model = "cerebras_llama70b"
+temperature = 0.6
+max_tokens = 8192
+
+[functions.chat.variants.sambanova]
+type = "chat_completion"
+model = "sambanova_405b"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.chat.variants.groq]
+type = "chat_completion"
+model = "groq_llama33"
+temperature = 0.6
+max_tokens = 8192
+
+[functions.chat.variants.mistral]
+type = "chat_completion"
+model = "mistral_large"
+temperature = 0.7
+max_tokens = 8192
+
+[functions.chat.variants.deepseek]
+type = "chat_completion"
+model = "deepseek_v3"
+temperature = 0.5
+max_tokens = 8192
+
+[functions.chat.variants.gemini_pro]
+type = "chat_completion"
+model = "gemini_pro"
+temperature = 0.5
+max_tokens = 8192
+
+[functions.chat.variants.grok]
+type = "chat_completion"
+model = "grok_2"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.chat.variants.free_liquid]
+type = "chat_completion"
+model = "liquid_lfm_40b"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.chat.variants.free_gemini]
+type = "chat_completion"
+model = "gemini_2_flash_free"
+temperature = 0.7
+max_tokens = 4096
+
+# --- Strategy: Weighted Random Routing ---
+[functions.chat.experimentation]
+type = "static_weights"
+[functions.chat.experimentation.candidate_variants]
+cerebras = 0.15    # Fast & Free
+sambanova = 0.15   # Smart & Free
+groq = 0.1         # Fast
+mistral = 0.1      # Quality
+deepseek = 0.1     # Logic
+free_liquid = 0.1  # Free
+free_gemini = 0.1  # Free
+gemini_pro = 0.1   # Paid (Lower weight)
+grok = 0.1         # Paid (Lower weight)
+
+
+# ==================================================================
+# FUNCTION 2: BEST OF N (Quality via Rejection Sampling)
+# ==================================================================
+# 1. Generate 3 drafts with Cerebras (Instant Llama 3.3).
+# 2. Use SambaNova (Llama 405B) to pick the best one.
+
+[functions.best_of_n_chat]
+type = "chat"
+
+[functions.best_of_n_chat.variants.generator_cerebras]
+type = "chat_completion"
+model = "cerebras_llama70b"
+temperature = 0.85 # High temp for diverse drafts
+top_p = 0.95
+
+[functions.best_of_n_chat.variants.smart_sampler]
+type = "experimental_best_of_n_sampling"
+candidates = ["generator_cerebras", "generator_cerebras", "generator_cerebras"]
+timeout_s = 20
+
+[functions.best_of_n_chat.variants.smart_sampler.evaluator]
+model = "sambanova_405b" # 405B model is an excellent judge
+
+[functions.best_of_n_chat.experimentation]
+type = "uniform"
+candidate_variants = ["smart_sampler"]
+
+
+# ==================================================================
+# FUNCTION 3: MIXTURE OF N (Quality via Fusion)
+# ==================================================================
+# 1. Generate 3 drafts from diverse high-IQ models (Mistral, DeepSeek, Qwen).
+# 2. Use Gemini Pro (Paid, High Context) to fuse them into one answer.
+
+[functions.mixture_of_n_chat]
+type = "chat"
+
+# Helper variants for the mixture
+[functions.mixture_of_n_chat.variants.draft_mistral]
+type = "chat_completion"
+model = "mistral_large"
+temperature = 0.7
+
+[functions.mixture_of_n_chat.variants.draft_deepseek]
+type = "chat_completion"
+model = "deepseek_v3"
+temperature = 0.6
+
+[functions.mixture_of_n_chat.variants.draft_qwen]
+type = "chat_completion"
+model = "qwen_25_together"
+temperature = 0.7
+
+# The Mixture Strategy
+[functions.mixture_of_n_chat.variants.expert_council]
+type = "experimental_mixture_of_n"
+candidates = ["draft_mistral", "draft_deepseek", "draft_qwen"]
+timeout_s = 45
+
+# The Fuser (Gemini Pro integrates the insights)
+[functions.mixture_of_n_chat.variants.expert_council.fuser]
+model = "gemini_pro"
+
+[functions.mixture_of_n_chat.experimentation]
+type = "uniform"
+candidate_variants = ["expert_council"]

@@ -2,12 +2,12 @@
 # │                                   MODELS                                   │
 # └────────────────────────────────────────────────────────────────────────────┘
 
-[models."gpt-4o-mini-2024-07-18"]
-routing = ["openai"]
+[models.llama3_1_8b]
+routing = ["groq"]
 
-[models."gpt-4o-mini-2024-07-18".providers.openai]
-type = "openai"
-model_name = "gpt-4o-mini-2024-07-18"
+[models.llama3_1_8b.providers.groq]
+type = "groq"
+model_name = "meta-llama/llama-3.1-8b-instruct"
 
 # ┌────────────────────────────────────────────────────────────────────────────┐
 # │                                 FUNCTIONS                                  │
@@ -18,7 +18,7 @@ type = "chat"
 
 [functions.simple_llm_call.variants.baseline]
 type = "chat_completion"
-model = "gpt-4o-mini-2024-07-18"
+model = "llama3_1_8b"
 
 # ┌────────────────────────────────────────────────────────────────────────────┐
 # │                                  METRICS                                   │
