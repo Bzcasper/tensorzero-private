@@ -1,7 +1,9 @@
 services:
   # 1. TensorZero Gateway
   gateway:
-    image: tensorzero/gateway
+    build:
+      context: ..
+      dockerfile: gateway/Dockerfile
     ports:
       - "3001:3000"
     volumes:
