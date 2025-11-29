@@ -6,6 +6,7 @@ services:
       - "3001:3000"
     volumes:
       - ./config:/app/config:ro
+      - ./router:/app/router:ro
     command: --config-file /app/config/tensorzero.toml
     environment:
       - TENSORZERO_CLICKHOUSE_URL=http://default:${CLICKHOUSE_PASSWORD}@clickhouse:8123/tensorzero
