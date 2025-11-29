@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["project_description", "content_mode"],
+  "properties": {
+    "project_description": {
+      "type": "string",
+      "description": "What DIY project to create (e.g., 'paper airplane that flies far')",
+      "minLength": 5,
+      "maxLength": 200
+    },
+    "content_mode": {
+      "type": "string",
+      "enum": ["kid", "adult"],
+      "description": "Target audience - affects language and character style"
+    },
+    "target_duration_seconds": {
+      "type": "integer",
+      "default": 180,
+      "minimum": 60,
+      "maximum": 600,
+      "description": "Target video length in seconds"
+    },
+    "expected_steps": {
+      "type": "integer",
+      "default": 5,
+      "minimum": 3,
+      "maximum": 8,
+      "description": "Number of steps in the tutorial"
+    },
+    "character_description": {
+      "type": "string",
+      "default": "a cheerful cartoon character with simple rounded body, bright colors, big expressive eyes, wearing a colorful apron"
+    }
+  }
+}

@@ -2,11 +2,6 @@
 bind_address = "0.0.0.0:3000"
 disable_pseudonymous_usage_analytics = true
 
-[gateway.router]
-enabled = true
-model_path = "../router.onnx"
-tokenizer_path = "../tokenizer.json"
-
 # ==================================================================
 # MODEL DEFINITIONS (Providers & Routing)
 # ==================================================================
@@ -240,3 +235,273 @@ model = "gemini_pro"
 [functions.mixture_of_n_chat.experimentation]
 type = "uniform"
 candidate_variants = ["expert_council"]
+
+# ==================================================================
+# DIY VIDEO PRODUCTION FUNCTIONS
+# ==================================================================
+
+# Fast Inference (Cerebras -> Groq -> OpenRouter)
+[models.fast_llm]
+routing = ["cerebras", "groq", "openrouter_fast"]
+
+[models.fast_llm.providers.cerebras]
+type = "openai"
+api_base = "https://api.cerebras.ai/v1"
+model_name = "llama3.1-70b"
+api_key_location = "env::CEREBRAS_API_KEY"
+
+[models.fast_llm.providers.groq]
+type = "groq"
+model_name = "llama-3.3-70b-versatile"
+api_key_location = "env::GROQ_API_KEY"
+
+[models.fast_llm.providers.openrouter_fast]
+type = "openrouter"
+model_name = "meta-llama/llama-3.1-70b-instruct"
+api_key_location = "env::OPENROUTER_API_KEY"
+
+# Heavy Reasoning (SambaNova -> DeepSeek -> Mistral -> OpenRouter)
+[models.smart_llm]
+routing = ["sambanova", "deepseek", "mistral", "openrouter_smart"]
+
+[models.smart_llm.providers.sambanova]
+type = "openai"
+api_base = "https://api.sambanova.ai/v1"
+model_name = "Meta-Llama-3.1-405B-Instruct"
+api_key_location = "env::SAMBANOVA_API_KEY"
+
+[models.smart_llm.providers.deepseek]
+type = "deepseek"
+model_name = "deepseek-chat"
+api_key_location = "env::DEEPSEEK_API_KEY"
+
+[models.smart_llm.providers.mistral]
+type = "mistral"
+model_name = "mistral-large-latest"
+api_key_location = "env::MISTRAL_API_KEY"
+
+[models.smart_llm.providers.openrouter_smart]
+type = "openrouter"
+model_name = "openai/gpt-4o"
+api_key_location = "env::OPENROUTER_API_KEY"
+
+# Creative/Novelty (Grok -> Gemini -> Together)
+[models.creative_llm]
+routing = ["xai", "google", "together"]
+
+[models.creative_llm.providers.xai]
+type = "xai"
+model_name = "grok-2-1212"
+api_key_location = "env::GROK_API_KEY"
+
+[models.creative_llm.providers.google]
+type = "google_ai_studio_gemini"
+model_name = "gemini-1.5-pro"
+api_key_location = "env::GEMINI_API_KEY"
+
+[models.creative_llm.providers.together]
+type = "together"
+model_name = "Qwen/Qwen2.5-72B-Instruct-Turbo"
+api_key_location = "env::TOGETHER_API_KEY"
+
+# 1. Script Generator
+[functions.script_generator]
+type = "json"
+description = "Generate structured DIY video script"
+system_template = "templates/script_generator_system.minijinja"
+user_schema = "templates/script_generator_user_schema.json"
+output_schema = "templates/script_output_schema.json"
+
+[functions.script_generator.variants.grok_creative]
+type = "chat_completion"
+model = "grok_2"
+temperature = 0.8
+max_tokens = 4096
+
+[functions.script_generator.variants.cerebras_fast]
+type = "chat_completion"
+model = "cerebras_llama70b"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.script_generator.experimentation]
+type = "static_weights"
+[functions.script_generator.experimentation.candidate_variants]
+grok_creative = 0.7
+cerebras_fast = 0.3
+
+# A/B Testing Variants for Script Generation
+[functions.script_generator.variants.creative_mode]
+type = "chat_completion"
+model = "creative_llm"
+temperature = 0.9
+max_tokens = 4096
+json_mode = "strict"
+
+[functions.script_generator.variants.structured_mode]
+type = "chat_completion"
+model = "smart_llm"
+temperature = 0.3
+max_tokens = 4096
+json_mode = "strict"
+
+# EXPERIMENT 1: Script Logic
+# Hypothesis: High-reasoning models (Claude 3.5 Sonnet) create better video pacing than generic models (GPT-4o).
+[functions.script_generator.variants.claude_sonnet]
+type = "chat_completion"
+model = "anthropic::claude-3-5-sonnet-20241022"
+temperature = 0.7
+
+[functions.script_generator.variants.gpt4o]
+type = "chat_completion"
+model = "openai::gpt-4o"
+temperature = 0.7
+
+# Use "track_and_stop" to automatically shift traffic to the winner
+# based on the "video_quality_score" metric we defined earlier.
+[functions.script_generator.experimentation]
+type = "track_and_stop"
+metric = "video_quality_score"
+candidate_variants = ["claude_sonnet", "gpt4o"]
+epsilon = 0.1 # Exploration parameter
+
+# Neural Router Integration (when router service is available)
+# [functions.script_generator.experimentation]
+# type = "neural_router"
+# router_url = "http://neural-router:8080/route"
+# fallback = "track_and_stop"
+# context = { function_name = "script_generator" }
+# epsilon = 0.1
+
+# 2. Prompt Enhancer
+[functions.prompt_enhancer]
+type = "json"
+description = "Enhance basic image prompts for better AI generation"
+system_template = "templates/prompt_enhancer_system.minijinja"
+user_schema = "templates/prompt_enhancer_user_schema.json"
+output_schema = "templates/prompt_enhancer_output_schema.json"
+
+[functions.prompt_enhancer.variants.mistral_balanced]
+type = "chat_completion"
+model = "mistral_large"
+temperature = 0.6
+max_tokens = 2048
+
+[functions.prompt_enhancer.variants.deepseek_efficient]
+type = "chat_completion"
+model = "deepseek_v3"
+temperature = 0.5
+max_tokens = 2048
+
+[functions.prompt_enhancer.variants.cerebras_creative]
+type = "chat_completion"
+model = "cerebras_llama70b"
+temperature = 0.7
+max_tokens = 2048
+
+# EXPERIMENT 2: Prompt Enhancement Style
+# Hypothesis: "Cinematic" instructions yield better images than "Descriptive" instructions.
+[functions.prompt_enhancer.variants.cinematic_style]
+type = "chat_completion"
+model = "fast_llm" # Llama 3.1 70b
+system_template = "templates/prompt_enhancer_system_cinematic.minijinja"
+
+[functions.prompt_enhancer.variants.descriptive_style]
+type = "chat_completion"
+model = "fast_llm"
+system_template = "templates/prompt_enhancer_system_descriptive.minijinja"
+
+[functions.prompt_enhancer.experimentation]
+type = "static_weights" # Standard A/B test (50/50 split)
+[functions.prompt_enhancer.experimentation.candidate_variants]
+cinematic_style = 0.5
+descriptive_style = 0.5
+
+# 3. Video Evaluator (Quality Assurance Judge)
+[functions.video_evaluator]
+type = "json"
+description = "Strict Video Production Quality Assurance AI"
+system_template = "templates/video_evaluator_system.minijinja"
+user_schema = "templates/video_evaluator_user_schema.json"
+output_schema = "templates/video_evaluator_output_schema.json"
+
+[functions.video_evaluator.variants.gemini_judge]
+type = "chat_completion"
+model = "google_ai_studio_gemini::gemini-1.5-pro" # High reasoning + Vision capable
+temperature = 0.1
+json_mode = "strict"
+
+[functions.video_evaluator.variants.grok_judge]
+type = "chat_completion"
+model = "grok_2"
+temperature = 0.1
+json_mode = "strict"
+
+[functions.video_evaluator.experimentation]
+type = "static_weights"
+[functions.video_evaluator.experimentation.candidate_variants]
+gemini_judge = 0.7
+grok_judge = 0.3
+
+# 3. Quality Evaluator
+[functions.quality_evaluator]
+type = "json"
+description = "Evaluate final video quality against requirements"
+system_template = "templates/quality_evaluator_system.minijinja"
+user_schema = "templates/quality_evaluator_user_schema.json"
+output_schema = "templates/quality_evaluator_output_schema.json"
+
+[functions.quality_evaluator.variants.gemini_pro]
+type = "chat_completion"
+model = "gemini_pro"
+temperature = 0.1
+max_tokens = 1024
+json_mode = "strict"
+
+# 4. Video Evaluator (Quality Assurance Judge)
+[functions.video_evaluator]
+type = "json"
+description = "Strict Video Production Quality Assurance AI"
+system_template = "templates/video_evaluator_system.minijinja"
+user_schema = "templates/video_evaluator_user_schema.json"
+output_schema = "templates/video_evaluator_output_schema.json"
+
+[functions.video_evaluator.variants.gemini_judge]
+type = "chat_completion"
+model = "google_ai_studio_gemini::gemini-1.5-pro" # High reasoning + Vision capable
+temperature = 0.1
+json_mode = "strict"
+
+[functions.video_evaluator.variants.grok_judge]
+type = "chat_completion"
+model = "grok_2"
+temperature = 0.1
+json_mode = "strict"
+
+[functions.video_evaluator.experimentation]
+type = "static_weights"
+[functions.video_evaluator.experimentation.candidate_variants]
+gemini_judge = 0.7
+grok_judge = 0.3
+
+# ==================================================================
+# METRICS FOR QUALITY FEEDBACK & OPTIMIZATION
+# ==================================================================
+
+[metrics.video_quality_score]
+type = "float"
+level = "inference"
+optimize = "max"
+description = "Overall video quality score (1-10)"
+
+[metrics.production_cost]
+type = "float"
+level = "episode"
+optimize = "min"
+description = "Total production cost in USD"
+
+[metrics.human_rating]
+type = "boolean"
+level = "episode"
+optimize = "max"
+description = "Human thumbs up/down rating"

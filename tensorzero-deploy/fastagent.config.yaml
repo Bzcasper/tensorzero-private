@@ -1,0 +1,15 @@
+# Fast Agent Configuration for DIY Video Production
+# This configures the Media Server MCP server for video processing
+
+mcp:
+  servers:
+    media_server:
+      command: "uv"
+      args: ["run", "python", "media_server_mcp.py"]
+      env:
+        IMAGE_AUTH: "${IMAGE_AUTH}"
+        MEDIA_SERVER_URL: "${MEDIA_SERVER_URL}"
+
+# Optional: Additional configuration
+# model: "tensorzero.script_generator"  # Use TensorZero functions as models
+# log_level: "INFO"

@@ -1,0 +1,1693 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+config/
+  tensorzero.toml
+router/
+  router-cli/
+    benches/
+      routing_benchmark.rs
+    src/
+      main.rs
+    Cargo.toml
+  router-core/
+    src/
+      features.rs
+      lib.rs
+      model.rs
+      tokenizer.rs
+    Cargo.toml
+  router-ffi/
+    src/
+      lib.rs
+    Cargo.toml
+    index.d.ts
+    index.js
+    package.json
+    router-ffi.linux-x64-gnu.node
+    test_router.js
+  router-wasm/
+    src/
+      lib.rs
+    Cargo.toml
+  Cargo.toml
+  create_dummy_model.py
+  dummy_model.onnx
+  dummy_model.onnx.data
+  inspect_model.py
+  router.onnx
+  router.onnx.data
+  simple_export.py
+  test_router_integration.js
+  tokenizer.json
+  train_router.py
+docker-compose.yml
+gemini.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="config/tensorzero.toml">
+[gateway]
+bind_address = "0.0.0.0:3000"
+disable_pseudonymous_usage_analytics = true
+
+# ==================================================================
+# MODEL DEFINITIONS (Providers & Routing)
+# ==================================================================
+
+# --- 1. CEREBRAS (Instant Speed - Best for Drafting) ---
+[models.cerebras_llama70b]
+routing = ["cerebras"]
+
+[models.cerebras_llama70b.providers.cerebras]
+type = "openai"
+api_base = "https://api.cerebras.ai/v1"
+model_name = "llama3.3-70b" # Latest supported on Cerebras
+api_key_location = "env::CEREBRAS_API_KEY"
+
+# --- 2. SAMBANOVA (Massive Reasoning - Best for Judging) ---
+[models.sambanova_405b]
+routing = ["sambanova"]
+
+[models.sambanova_405b.providers.sambanova]
+type = "openai"
+api_base = "https://api.sambanova.ai/v1"
+model_name = "Meta-Llama-3.1-405B-Instruct"
+api_key_location = "env::SAMBANOVA_API_KEY"
+
+# --- 3. GROQ (Reliable Speed) ---
+[models.groq_llama33]
+routing = ["groq"]
+
+[models.groq_llama33.providers.groq]
+type = "groq"
+model_name = "llama-3.3-70b-versatile"
+api_key_location = "env::GROQ_API_KEY"
+
+# --- 4. MISTRAL (High Quality European Model) ---
+[models.mistral_large]
+routing = ["mistral"]
+
+[models.mistral_large.providers.mistral]
+type = "mistral"
+model_name = "mistral-large-latest"
+api_key_location = "env::MISTRAL_API_KEY"
+
+# --- 5. DEEPSEEK (Best Value/Logic) ---
+[models.deepseek_v3]
+routing = ["deepseek"]
+
+[models.deepseek_v3.providers.deepseek]
+type = "deepseek"
+model_name = "deepseek-chat"
+api_key_location = "env::DEEPSEEK_API_KEY"
+
+# --- 6. TOGETHER AI (Qwen 2.5 - SOTA Open Source) ---
+[models.qwen_25_together]
+routing = ["together"]
+
+[models.qwen_25_together.providers.together]
+type = "together"
+model_name = "Qwen/Qwen2.5-72B-Instruct-Turbo"
+api_key_location = "env::TOGETHER_API_KEY"
+
+# --- 7. PAID MODELS (Gemini & Grok) ---
+[models.gemini_pro]
+routing = ["google"]
+[models.gemini_pro.providers.google]
+type = "google_ai_studio_gemini"
+model_name = "gemini-1.5-pro"
+api_key_location = "env::GEMINI_API_KEY"
+
+[models.grok_2]
+routing = ["xai"]
+[models.grok_2.providers.xai]
+type = "xai"
+model_name = "grok-2-1212"
+api_key_location = "env::GROK_API_KEY"
+
+# --- 8. OPENROUTER FREE MODELS ---
+[models.liquid_lfm_40b]
+routing = ["openrouter_liquid"]
+[models.liquid_lfm_40b.providers.openrouter_liquid]
+type = "openrouter"
+model_name = "liquid/lfm-40b"
+api_key_location = "env::OPENROUTER_API_KEY"
+
+[models.gemini_2_flash_free]
+routing = ["openrouter_gemini_free"]
+[models.gemini_2_flash_free.providers.openrouter_gemini_free]
+type = "openrouter"
+model_name = "google/gemini-2.0-flash-exp:free"
+api_key_location = "env::OPENROUTER_API_KEY"
+
+
+# ==================================================================
+# FUNCTION 1: STANDARD CHAT (Load Balanced)
+# ==================================================================
+[functions.chat]
+type = "chat"
+
+# --- Variants ---
+[functions.chat.variants.cerebras]
+type = "chat_completion"
+model = "cerebras_llama70b"
+temperature = 0.6
+max_tokens = 8192
+
+[functions.chat.variants.sambanova]
+type = "chat_completion"
+model = "sambanova_405b"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.chat.variants.groq]
+type = "chat_completion"
+model = "groq_llama33"
+temperature = 0.6
+max_tokens = 8192
+
+[functions.chat.variants.mistral]
+type = "chat_completion"
+model = "mistral_large"
+temperature = 0.7
+max_tokens = 8192
+
+[functions.chat.variants.deepseek]
+type = "chat_completion"
+model = "deepseek_v3"
+temperature = 0.5
+max_tokens = 8192
+
+[functions.chat.variants.gemini_pro]
+type = "chat_completion"
+model = "gemini_pro"
+temperature = 0.5
+max_tokens = 8192
+
+[functions.chat.variants.grok]
+type = "chat_completion"
+model = "grok_2"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.chat.variants.free_liquid]
+type = "chat_completion"
+model = "liquid_lfm_40b"
+temperature = 0.7
+max_tokens = 4096
+
+[functions.chat.variants.free_gemini]
+type = "chat_completion"
+model = "gemini_2_flash_free"
+temperature = 0.7
+max_tokens = 4096
+
+# --- Strategy: Weighted Random Routing ---
+[functions.chat.experimentation]
+type = "static_weights"
+[functions.chat.experimentation.candidate_variants]
+cerebras = 0.15    # Fast & Free
+sambanova = 0.15   # Smart & Free
+groq = 0.1         # Fast
+mistral = 0.1      # Quality
+deepseek = 0.1     # Logic
+free_liquid = 0.1  # Free
+free_gemini = 0.1  # Free
+gemini_pro = 0.1   # Paid (Lower weight)
+grok = 0.1         # Paid (Lower weight)
+
+
+# ==================================================================
+# FUNCTION 2: BEST OF N (Quality via Rejection Sampling)
+# ==================================================================
+# 1. Generate 3 drafts with Cerebras (Instant Llama 3.3).
+# 2. Use SambaNova (Llama 405B) to pick the best one.
+
+[functions.best_of_n_chat]
+type = "chat"
+
+[functions.best_of_n_chat.variants.generator_cerebras]
+type = "chat_completion"
+model = "cerebras_llama70b"
+temperature = 0.85 # High temp for diverse drafts
+top_p = 0.95
+
+[functions.best_of_n_chat.variants.smart_sampler]
+type = "experimental_best_of_n_sampling"
+candidates = ["generator_cerebras", "generator_cerebras", "generator_cerebras"]
+timeout_s = 20
+
+[functions.best_of_n_chat.variants.smart_sampler.evaluator]
+model = "sambanova_405b" # 405B model is an excellent judge
+
+[functions.best_of_n_chat.experimentation]
+type = "uniform"
+candidate_variants = ["smart_sampler"]
+
+
+# ==================================================================
+# FUNCTION 3: MIXTURE OF N (Quality via Fusion)
+# ==================================================================
+# 1. Generate 3 drafts from diverse high-IQ models (Mistral, DeepSeek, Qwen).
+# 2. Use Gemini Pro (Paid, High Context) to fuse them into one answer.
+
+[functions.mixture_of_n_chat]
+type = "chat"
+
+# Helper variants for the mixture
+[functions.mixture_of_n_chat.variants.draft_mistral]
+type = "chat_completion"
+model = "mistral_large"
+temperature = 0.7
+
+[functions.mixture_of_n_chat.variants.draft_deepseek]
+type = "chat_completion"
+model = "deepseek_v3"
+temperature = 0.6
+
+[functions.mixture_of_n_chat.variants.draft_qwen]
+type = "chat_completion"
+model = "qwen_25_together"
+temperature = 0.7
+
+# The Mixture Strategy
+[functions.mixture_of_n_chat.variants.expert_council]
+type = "experimental_mixture_of_n"
+candidates = ["draft_mistral", "draft_deepseek", "draft_qwen"]
+timeout_s = 45
+
+# The Fuser (Gemini Pro integrates the insights)
+[functions.mixture_of_n_chat.variants.expert_council.fuser]
+model = "gemini_pro"
+
+[functions.mixture_of_n_chat.experimentation]
+type = "uniform"
+candidate_variants = ["expert_council"]
+</file>
+
+<file path="router/router-cli/benches/routing_benchmark.rs">
+use criterion::{criterion_group, criterion_main, Criterion};
+use router_core::NeuralRouter;
+use std::path::PathBuf;
+
+fn benchmark_routing(c: &mut Criterion) {
+    // This expects a dummy model to be present.
+    // For now, we'll skip if the model doesn't exist or use a placeholder.
+    let model_path = PathBuf::from("../router.onnx");
+    let tokenizer_path = PathBuf::from("../tokenizer.json");
+    println!("Current directory: {:?}", std::env::current_dir());
+    println!("Looking for model at: {:?}", model_path.canonicalize());
+
+    if !model_path.exists() || !tokenizer_path.exists() {
+        println!("Skipping benchmark: router.onnx or tokenizer.json not found");
+        return;
+    }
+
+    let router = NeuralRouter::new(&model_path, &tokenizer_path).unwrap();
+    let text = "Write a python script to sort a list";
+
+    c.bench_function("route", |b| b.iter(|| router.route(text).unwrap()));
+}
+
+criterion_group!(benches, benchmark_routing);
+criterion_main!(benches);
+</file>
+
+<file path="router/router-cli/src/main.rs">
+use clap::Parser;
+use router_core::NeuralRouter;
+use std::path::PathBuf;
+use std::time::Instant;
+
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    /// Path to the ONNX model
+    #[arg(short, long)]
+    model: PathBuf,
+
+    /// Path to the tokenizer JSON
+    #[arg(short, long)]
+    tokenizer: PathBuf,
+
+    /// Text to route
+    #[arg(long, default_value = "Write a python script to sort a list")]
+    text: String,
+}
+
+fn main() -> anyhow::Result<()> {
+    let cli = Cli::parse();
+
+    println!("Loading model from {:?}", cli.model);
+    println!("Loading tokenizer from {:?}", cli.tokenizer);
+    let router = NeuralRouter::new(&cli.model, &cli.tokenizer)?;
+
+    println!("Routing text: {:?}", cli.text);
+    let start = Instant::now();
+    let result = router.route(&cli.text)?;
+    let duration = start.elapsed();
+
+    println!("Result: {:?}", result);
+    println!("Time taken: {:?}", duration);
+
+    Ok(())
+}
+</file>
+
+<file path="router/router-cli/Cargo.toml">
+[package]
+name = "router-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+router-core = { path = "../router-core" }
+clap = { version = "4.5", features = ["derive"] }
+criterion = "0.5"
+anyhow = "1.0"
+
+[[bench]]
+name = "routing_benchmark"
+harness = false
+</file>
+
+<file path="router/router-core/src/features.rs">
+use tract_onnx::prelude::Tensor;
+
+pub struct Features {
+    pub input_ids: Vec<u32>,
+}
+
+impl Features {
+    pub fn new(input_ids: Vec<u32>) -> Self {
+        Self { input_ids }
+    }
+
+    pub fn to_tensor(&self) -> Tensor {
+        // Shape: [1, seq_len]
+        let shape = [1, self.input_ids.len()];
+        // Convert u32 to i64 because ONNX usually expects i64 for indices
+        let data: Vec<i64> = self.input_ids.iter().map(|&x| x as i64).collect();
+        Tensor::from_shape(&shape, &data).unwrap()
+    }
+}
+</file>
+
+<file path="router/router-core/src/lib.rs">
+mod features;
+mod model;
+mod tokenizer;
+
+pub use features::Features;
+pub use model::Model;
+pub use tokenizer::Tokenizer;
+
+use anyhow::Result;
+use std::path::Path;
+
+pub struct NeuralRouter {
+    model: Model,
+    tokenizer: Tokenizer,
+}
+
+impl NeuralRouter {
+    pub fn new<P: AsRef<Path>>(model_path: P, tokenizer_path: P) -> Result<Self> {
+        let model = Model::load(model_path)?;
+        let tokenizer = Tokenizer::load(tokenizer_path)?;
+        Ok(Self { model, tokenizer })
+    }
+
+    pub fn route(&self, text: &str) -> Result<Vec<f32>> {
+        let input_ids = self.tokenizer.encode(text)?;
+        let features = Features::new(input_ids);
+        self.model.predict(&features)
+    }
+}
+</file>
+
+<file path="router/router-core/src/model.rs">
+use anyhow::{Context, Result};
+use std::path::Path;
+use tract_onnx::prelude::*;
+
+type TractPlan = SimplePlan<TypedFact, Box<dyn TypedOp>, Graph<TypedFact, Box<dyn TypedOp>>>;
+
+pub struct Model {
+    runnable: TractPlan,
+}
+
+impl Model {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let model = tract_onnx::onnx()
+            .model_for_path(path)?
+            .into_optimized()?
+            .into_runnable()?;
+
+        Ok(Self { runnable: model })
+    }
+
+    pub fn load_from_bytes(bytes: &[u8]) -> Result<Self> {
+        let mut reader = std::io::Cursor::new(bytes);
+        let model = tract_onnx::onnx()
+            .model_for_read(&mut reader)?
+            .into_optimized()?
+            .into_runnable()?;
+
+        Ok(Self { runnable: model })
+    }
+
+    pub fn predict(&self, features: &crate::Features) -> Result<Vec<f32>> {
+        let input = features.to_tensor();
+        let result = self.runnable.run(tvec!(input.into()))?;
+
+        let output = result[0]
+            .to_array_view::<f32>()?
+            .as_slice()
+            .context("Failed to convert output to slice")?
+            .to_vec();
+
+        Ok(output)
+    }
+}
+</file>
+
+<file path="router/router-core/src/tokenizer.rs">
+use anyhow::Result;
+use std::path::Path;
+use tokenizers::Tokenizer as HuggingFaceTokenizer;
+
+pub struct Tokenizer {
+    inner: HuggingFaceTokenizer,
+}
+
+impl Tokenizer {
+    pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
+        let inner = HuggingFaceTokenizer::from_file(path).map_err(|e| anyhow::anyhow!(e))?;
+        Ok(Self { inner })
+    }
+
+    pub fn load_from_bytes(bytes: &[u8]) -> Result<Self> {
+        let inner = HuggingFaceTokenizer::from_bytes(bytes).map_err(|e| anyhow::anyhow!(e))?;
+        Ok(Self { inner })
+    }
+
+    pub fn encode(&self, text: &str) -> Result<Vec<u32>> {
+        let encoding = self
+            .inner
+            .encode(text, true)
+            .map_err(|e| anyhow::anyhow!(e))?;
+        Ok(encoding.get_ids().to_vec())
+    }
+}
+</file>
+
+<file path="router/router-core/Cargo.toml">
+[package]
+name = "router-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tract-onnx = "0.21.7"
+anyhow = "1.0"
+thiserror = "1.0"
+ndarray = "0.15"
+tokenizers = { version = "0.21", default-features = false, features = ["onig"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+</file>
+
+<file path="router/router-ffi/src/lib.rs">
+use napi_derive::napi;
+use router_core::NeuralRouter as CoreRouter;
+
+#[napi]
+pub struct NeuralRouter {
+    inner: CoreRouter,
+}
+
+#[napi]
+impl NeuralRouter {
+    #[napi(constructor)]
+    pub fn new(model_path: String, tokenizer_path: String) -> napi::Result<Self> {
+        let inner = CoreRouter::new(&model_path, &tokenizer_path)
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        Ok(Self { inner })
+    }
+
+    #[napi]
+    pub fn route(&self, text: String) -> napi::Result<Vec<f64>> {
+        let result = self
+            .inner
+            .route(&text)
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        // Convert f32 to f64 for JS
+        Ok(result.into_iter().map(|x| x as f64).collect())
+    }
+}
+</file>
+
+<file path="router/router-ffi/Cargo.toml">
+[package]
+name = "router-ffi"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+router-core = { path = "../router-core" }
+napi = { version = "2.16", features = ["async"] }
+napi-derive = "2.16"
+anyhow = "1.0"
+
+[build-dependencies]
+napi-build = "2.1"
+</file>
+
+<file path="router/router-ffi/index.d.ts">
+/* tslint:disable */
+/* eslint-disable */
+
+/* auto-generated by NAPI-RS */
+
+export declare class NeuralRouter {
+  constructor(modelPath: string, tokenizerPath: string)
+  route(text: string): Array<number>
+}
+</file>
+
+<file path="router/router-ffi/index.js">
+/* tslint:disable */
+/* eslint-disable */
+/* prettier-ignore */
+
+/* auto-generated by NAPI-RS */
+
+const { existsSync, readFileSync } = require('fs')
+const { join } = require('path')
+
+const { platform, arch } = process
+
+let nativeBinding = null
+let localFileExisted = false
+let loadError = null
+
+function isMusl() {
+  // For Node 10
+  if (!process.report || typeof process.report.getReport !== 'function') {
+    try {
+      const lddPath = require('child_process').execSync('which ldd').toString().trim()
+      return readFileSync(lddPath, 'utf8').includes('musl')
+    } catch (e) {
+      return true
+    }
+  } else {
+    const { glibcVersionRuntime } = process.report.getReport().header
+    return !glibcVersionRuntime
+  }
+}
+
+switch (platform) {
+  case 'android':
+    switch (arch) {
+      case 'arm64':
+        localFileExisted = existsSync(join(__dirname, 'router-ffi.android-arm64.node'))
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.android-arm64.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-android-arm64')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      case 'arm':
+        localFileExisted = existsSync(join(__dirname, 'router-ffi.android-arm-eabi.node'))
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.android-arm-eabi.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-android-arm-eabi')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      default:
+        throw new Error(`Unsupported architecture on Android ${arch}`)
+    }
+    break
+  case 'win32':
+    switch (arch) {
+      case 'x64':
+        localFileExisted = existsSync(
+          join(__dirname, 'router-ffi.win32-x64-msvc.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.win32-x64-msvc.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-win32-x64-msvc')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      case 'ia32':
+        localFileExisted = existsSync(
+          join(__dirname, 'router-ffi.win32-ia32-msvc.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.win32-ia32-msvc.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-win32-ia32-msvc')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      case 'arm64':
+        localFileExisted = existsSync(
+          join(__dirname, 'router-ffi.win32-arm64-msvc.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.win32-arm64-msvc.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-win32-arm64-msvc')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      default:
+        throw new Error(`Unsupported architecture on Windows: ${arch}`)
+    }
+    break
+  case 'darwin':
+    localFileExisted = existsSync(join(__dirname, 'router-ffi.darwin-universal.node'))
+    try {
+      if (localFileExisted) {
+        nativeBinding = require('./router-ffi.darwin-universal.node')
+      } else {
+        nativeBinding = require('@tensorzero/router-darwin-universal')
+      }
+      break
+    } catch {}
+    switch (arch) {
+      case 'x64':
+        localFileExisted = existsSync(join(__dirname, 'router-ffi.darwin-x64.node'))
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.darwin-x64.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-darwin-x64')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      case 'arm64':
+        localFileExisted = existsSync(
+          join(__dirname, 'router-ffi.darwin-arm64.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.darwin-arm64.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-darwin-arm64')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      default:
+        throw new Error(`Unsupported architecture on macOS: ${arch}`)
+    }
+    break
+  case 'freebsd':
+    if (arch !== 'x64') {
+      throw new Error(`Unsupported architecture on FreeBSD: ${arch}`)
+    }
+    localFileExisted = existsSync(join(__dirname, 'router-ffi.freebsd-x64.node'))
+    try {
+      if (localFileExisted) {
+        nativeBinding = require('./router-ffi.freebsd-x64.node')
+      } else {
+        nativeBinding = require('@tensorzero/router-freebsd-x64')
+      }
+    } catch (e) {
+      loadError = e
+    }
+    break
+  case 'linux':
+    switch (arch) {
+      case 'x64':
+        if (isMusl()) {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-x64-musl.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-x64-musl.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-x64-musl')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        } else {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-x64-gnu.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-x64-gnu.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-x64-gnu')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        }
+        break
+      case 'arm64':
+        if (isMusl()) {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-arm64-musl.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-arm64-musl.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-arm64-musl')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        } else {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-arm64-gnu.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-arm64-gnu.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-arm64-gnu')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        }
+        break
+      case 'arm':
+        if (isMusl()) {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-arm-musleabihf.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-arm-musleabihf.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-arm-musleabihf')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        } else {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-arm-gnueabihf.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-arm-gnueabihf.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-arm-gnueabihf')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        }
+        break
+      case 'riscv64':
+        if (isMusl()) {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-riscv64-musl.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-riscv64-musl.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-riscv64-musl')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        } else {
+          localFileExisted = existsSync(
+            join(__dirname, 'router-ffi.linux-riscv64-gnu.node')
+          )
+          try {
+            if (localFileExisted) {
+              nativeBinding = require('./router-ffi.linux-riscv64-gnu.node')
+            } else {
+              nativeBinding = require('@tensorzero/router-linux-riscv64-gnu')
+            }
+          } catch (e) {
+            loadError = e
+          }
+        }
+        break
+      case 's390x':
+        localFileExisted = existsSync(
+          join(__dirname, 'router-ffi.linux-s390x-gnu.node')
+        )
+        try {
+          if (localFileExisted) {
+            nativeBinding = require('./router-ffi.linux-s390x-gnu.node')
+          } else {
+            nativeBinding = require('@tensorzero/router-linux-s390x-gnu')
+          }
+        } catch (e) {
+          loadError = e
+        }
+        break
+      default:
+        throw new Error(`Unsupported architecture on Linux: ${arch}`)
+    }
+    break
+  default:
+    throw new Error(`Unsupported OS: ${platform}, architecture: ${arch}`)
+}
+
+if (!nativeBinding) {
+  if (loadError) {
+    throw loadError
+  }
+  throw new Error(`Failed to load native binding`)
+}
+
+const { NeuralRouter } = nativeBinding
+
+module.exports.NeuralRouter = NeuralRouter
+</file>
+
+<file path="router/router-ffi/package.json">
+{
+    "name": "@tensorzero/router",
+    "version": "0.1.0",
+    "main": "index.js",
+    "types": "index.d.ts",
+    "napi": {
+        "name": "router-ffi",
+        "triples": {
+            "defaults": true,
+            "additional": [
+                "x86_64-unknown-linux-gnu",
+                "aarch64-unknown-linux-gnu",
+                "x86_64-apple-darwin",
+                "aarch64-apple-darwin",
+                "x86_64-pc-windows-msvc"
+            ]
+        }
+    },
+    "scripts": {
+        "build": "napi build --platform --release",
+        "build:debug": "napi build --platform",
+        "artifacts": "napi artifacts",
+        "test": "node test_router.js"
+    },
+    "devDependencies": {
+        "@napi-rs/cli": "^2.18.0"
+    },
+    "engines": {
+        "node": ">= 10"
+    }
+}
+</file>
+
+<file path="router/router-ffi/test_router.js">
+const { NeuralRouter } = require('./index.js');
+const path = require('path');
+
+const modelPath = path.join(__dirname, '../router.onnx');
+const tokenizerPath = path.join(__dirname, '../tokenizer.json');
+
+console.log(`Loading model from ${modelPath}`);
+console.log(`Loading tokenizer from ${tokenizerPath}`);
+
+try {
+  const router = new NeuralRouter(modelPath, tokenizerPath);
+  console.log('Router loaded successfully');
+
+  const text = "Write a python script to sort a list";
+  console.log(`Routing text: "${text}"`);
+  
+  const probs = router.route(text);
+  console.log('Probabilities:', probs);
+  
+  // Check if probs sum to ~1
+  const sum = probs.reduce((a, b) => a + b, 0);
+  console.log('Sum:', sum);
+  
+  if (Math.abs(sum - 1.0) > 0.01) {
+      console.error('Probabilities do not sum to 1');
+      process.exit(1);
+  }
+
+} catch (e) {
+  console.error('Error:', e);
+  process.exit(1);
+}
+</file>
+
+<file path="router/router-wasm/src/lib.rs">
+use router_core::{Features, Model as CoreModel};
+use wasm_bindgen::prelude::*;
+
+#[wasm_bindgen]
+pub struct Model {
+    inner: CoreModel,
+}
+
+#[wasm_bindgen]
+impl Model {
+    #[wasm_bindgen(constructor)]
+    pub fn new(bytes: &[u8]) -> Result<Model, JsValue> {
+        console_error_panic_hook::set_once();
+        let inner =
+            CoreModel::load_from_bytes(bytes).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        Ok(Model { inner })
+    }
+
+    pub fn route(&self, input: &[f32]) -> Result<Vec<f32>, JsValue> {
+        let input_ids: Vec<u32> = input.iter().map(|&x| x as u32).collect();
+        let features = Features::new(input_ids);
+        self.inner
+            .predict(&features)
+            .map_err(|e| JsValue::from_str(&e.to_string()))
+    }
+}
+</file>
+
+<file path="router/router-wasm/Cargo.toml">
+[package]
+name = "router-wasm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+router-core = { path = "../router-core" }
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+js-sys = "0.3"
+getrandom = { version = "0.2", features = ["js"] }
+
+[lib]
+crate-type = ["cdylib"]
+</file>
+
+<file path="router/Cargo.toml">
+[workspace]
+members = [
+    "router-core",
+    "router-ffi",
+    "router-wasm",
+    "router-cli",
+]
+resolver = "2"
+</file>
+
+<file path="router/create_dummy_model.py">
+import torch
+import torch.nn as nn
+
+class DummyModel(nn.Module):
+    def __init__(self):
+        super(DummyModel, self).__init__()
+        self.linear = nn.Linear(1, 1)
+
+    def forward(self, x):
+        return self.linear(x)
+
+model = DummyModel()
+dummy_input = torch.randn(1, 1)
+torch.onnx.export(model, dummy_input, "dummy_model.onnx", input_names=["input"], output_names=["output"])
+print("Created dummy_model.onnx")
+</file>
+
+<file path="router/inspect_model.py">
+import onnx
+
+model = onnx.load("dummy_model.onnx")
+print("Input:")
+for input in model.graph.input:
+    print(input.name, input.type.tensor_type.shape)
+
+print("\nOutput:")
+for output in model.graph.output:
+    print(output.name, output.type.tensor_type.shape)
+
+print("\nNodes:")
+for node in model.graph.node:
+    print(node.op_type, node.name)
+</file>
+
+<file path="router/simple_export.py">
+import torch
+import torch.nn as nn
+
+class NeuralRouterModel(nn.Module):
+    def __init__(self):
+        super(NeuralRouterModel, self).__init__()
+        self.embedding = nn.Embedding(1000, 64)
+        self.gru = nn.GRU(64, 32, batch_first=True)
+        self.fc = nn.Linear(32, 9)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        embedded = self.embedding(x)
+        _, hn = self.gru(embedded)
+        hidden = hn[-1]
+        logits = self.fc(hidden)
+        return self.softmax(logits)
+
+model = NeuralRouterModel()
+dummy_input = torch.randint(0, 1000, (1, 10), dtype=torch.long)
+
+print("Exporting...")
+torch.onnx.export(
+    model, 
+    dummy_input, 
+    "router.onnx", 
+    input_names=["input_ids"], 
+    output_names=["output"],
+    opset_version=14
+)
+print("Done.")
+</file>
+
+<file path="router/test_router_integration.js">
+const { NeuralRouter } = require('./router-ffi/router-ffi.linux-x64-gnu.node');
+
+async function testRouter() {
+  console.log('Testing NeuralRouter integration...');
+  
+  try {
+    const router = new NeuralRouter('./router.onnx', './tokenizer.json');
+    console.log('Router loaded successfully');
+    
+    const testTexts = [
+      'Write a Python function to sort a list',
+      'Explain quantum physics',
+      'What is the weather today?',
+      'Debug this JavaScript code',
+      'Write a creative story'
+    ];
+    
+    for (const text of testTexts) {
+      const scores = router.route(text);
+      const sum = scores.reduce((a, b) => a + b, 0);
+      const maxIndex = scores.indexOf(Math.max(...scores));
+      
+      console.log(`\nText: "${text}"`);
+      console.log(`Scores: [${scores.map(s => s.toFixed(4)).join(', ')}]`);
+      console.log(`Sum: ${sum.toFixed(4)} (should be ~1.0)`);
+      console.log(`Best variant: ${maxIndex}`);
+    }
+    
+    console.log('\n✅ Router integration test passed!');
+    
+  } catch (error) {
+    console.error('❌ Router test failed:', error);
+    process.exit(1);
+  }
+}
+
+testRouter();
+</file>
+
+<file path="router/tokenizer.json">
+{
+  "version": "1.0",
+  "truncation": null,
+  "padding": null,
+  "added_tokens": [
+    {
+      "id": 0,
+      "content": "<unk>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 1,
+      "content": "<s>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    },
+    {
+      "id": 2,
+      "content": "</s>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  ],
+  "normalizer": null,
+  "pre_tokenizer": {
+    "type": "ByteLevel",
+    "add_prefix_space": false,
+    "trim_offsets": true,
+    "use_regex": true
+  },
+  "post_processor": null,
+  "decoder": {
+    "type": "ByteLevel",
+    "add_prefix_space": true,
+    "trim_offsets": true,
+    "use_regex": true
+  },
+  "model": {
+    "type": "BPE",
+    "dropout": null,
+    "unk_token": null,
+    "continuing_subword_prefix": null,
+    "end_of_word_suffix": null,
+    "fuse_unk": false,
+    "byte_fallback": false,
+    "ignore_merges": false,
+    "vocab": {
+      "<unk>": 0,
+      "<s>": 1,
+      "</s>": 2,
+      "?": 3,
+      "E": 4,
+      "F": 5,
+      "G": 6,
+      "H": 7,
+      "I": 8,
+      "S": 9,
+      "T": 10,
+      "U": 11,
+      "W": 12,
+      "a": 13,
+      "b": 14,
+      "c": 15,
+      "d": 16,
+      "e": 17,
+      "f": 18,
+      "g": 19,
+      "h": 20,
+      "i": 21,
+      "k": 22,
+      "l": 23,
+      "m": 24,
+      "n": 25,
+      "o": 26,
+      "p": 27,
+      "q": 28,
+      "r": 29,
+      "s": 30,
+      "t": 31,
+      "u": 32,
+      "v": 33,
+      "w": 34,
+      "x": 35,
+      "y": 36,
+      "z": 37,
+      "Ġ": 38,
+      "Ġa": 39,
+      "Ġt": 40,
+      "is": 41,
+      "Ġth": 42,
+      "Ġp": 43,
+      "Ġs": 44,
+      "an": 45,
+      "at": 46,
+      "ri": 47,
+      "Ġc": 48,
+      "Ġthe": 49,
+      "bo": 50,
+      "Wh": 51,
+      "Wri": 52,
+      "de": 53,
+      "ic": 54,
+      "in": 55,
+      "of": 56,
+      "or": 57,
+      "re": 58,
+      "ran": 59,
+      "ta": 60,
+      "te": 61,
+      "um": 62,
+      "ut": 63,
+      "Ġis": 64,
+      "Ġof": 65,
+      "Ġabo": 66,
+      "Ġto": 67,
+      "Ġthis": 68,
+      "ate": 69,
+      "Ġco": 70,
+      "Write": 71,
+      "Ġabout": 72
+    },
+    "merges": [
+      [
+        "Ġ",
+        "a"
+      ],
+      [
+        "Ġ",
+        "t"
+      ],
+      [
+        "i",
+        "s"
+      ],
+      [
+        "Ġt",
+        "h"
+      ],
+      [
+        "Ġ",
+        "p"
+      ],
+      [
+        "Ġ",
+        "s"
+      ],
+      [
+        "a",
+        "n"
+      ],
+      [
+        "a",
+        "t"
+      ],
+      [
+        "r",
+        "i"
+      ],
+      [
+        "Ġ",
+        "c"
+      ],
+      [
+        "Ġth",
+        "e"
+      ],
+      [
+        "b",
+        "o"
+      ],
+      [
+        "W",
+        "h"
+      ],
+      [
+        "W",
+        "ri"
+      ],
+      [
+        "d",
+        "e"
+      ],
+      [
+        "i",
+        "c"
+      ],
+      [
+        "i",
+        "n"
+      ],
+      [
+        "o",
+        "f"
+      ],
+      [
+        "o",
+        "r"
+      ],
+      [
+        "r",
+        "e"
+      ],
+      [
+        "r",
+        "an"
+      ],
+      [
+        "t",
+        "a"
+      ],
+      [
+        "t",
+        "e"
+      ],
+      [
+        "u",
+        "m"
+      ],
+      [
+        "u",
+        "t"
+      ],
+      [
+        "Ġ",
+        "is"
+      ],
+      [
+        "Ġ",
+        "of"
+      ],
+      [
+        "Ġa",
+        "bo"
+      ],
+      [
+        "Ġt",
+        "o"
+      ],
+      [
+        "Ġth",
+        "is"
+      ],
+      [
+        "at",
+        "e"
+      ],
+      [
+        "Ġc",
+        "o"
+      ],
+      [
+        "Wri",
+        "te"
+      ],
+      [
+        "Ġabo",
+        "ut"
+      ]
+    ]
+  }
+}
+</file>
+
+<file path="router/train_router.py">
+import torch
+import torch.nn as nn
+import torch.onnx
+from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders, processors
+
+# 1. Define the Model (FastGRNN-like / GRU)
+class NeuralRouterModel(nn.Module):
+    def __init__(self, vocab_size, embed_dim, hidden_dim, output_dim):
+        super(NeuralRouterModel, self).__init__()
+        self.embedding = nn.Embedding(vocab_size, embed_dim)
+        self.fc = nn.Linear(embed_dim, output_dim)
+        self.softmax = nn.Softmax(dim=1)
+
+    def forward(self, x):
+        # x: [batch, seq_len]
+        embedded = self.embedding(x)
+        # Mean pooling
+        pooled = torch.mean(embedded, dim=1)
+        logits = self.fc(pooled)
+        probs = self.softmax(logits)
+        return probs
+
+# 2. Train/Save Tokenizer
+def create_tokenizer(path="tokenizer.json"):
+    tokenizer = Tokenizer(models.BPE())
+    tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+    tokenizer.decoder = decoders.ByteLevel()
+    
+    trainer = trainers.BpeTrainer(vocab_size=1000, min_frequency=2, special_tokens=["<unk>", "<s>", "</s>"])
+    
+    # Train on some dummy data
+    data = [
+        "Write a python script to sort a list",
+        "Explain quantum physics",
+        "Who is the president of the US?",
+        "Translate hello to spanish",
+        "Generate a creative story about a robot",
+        "Fix this bug in my code",
+        "What is the capital of France?",
+        "Write a poem about the sea",
+        "Summarize this article",
+        "How do I cook pasta?"
+    ]
+    
+    tokenizer.train_from_iterator(data, trainer=trainer)
+    tokenizer.save(path)
+    return tokenizer
+
+# 3. Export Model
+def export_model(model_path="router.onnx", tokenizer_path="tokenizer.json"):
+    # Config
+    VOCAB_SIZE = 1000
+    EMBED_DIM = 64
+    HIDDEN_DIM = 32
+    OUTPUT_DIM = 9 # Number of variants in tensorzero.toml (approx)
+    
+    # Create Tokenizer
+    create_tokenizer(tokenizer_path)
+    
+    # Create Model
+    model = NeuralRouterModel(VOCAB_SIZE, EMBED_DIM, HIDDEN_DIM, OUTPUT_DIM)
+    model.eval()
+    
+    # Dummy Input
+    dummy_input = torch.randint(0, VOCAB_SIZE, (1, 10), dtype=torch.long)
+    
+    # Export
+    try:
+        torch.onnx.export(
+            model, 
+            dummy_input, 
+            model_path, 
+            input_names=["input_ids"], 
+            output_names=["output"],
+            dynamic_axes={
+                "input_ids": {0: "batch_size", 1: "seq_len"},
+                "output": {0: "batch_size"}
+            },
+            opset_version=14
+        )
+    except Exception as e:
+        print(f"Export failed with dynamic axes: {e}")
+        print("Retrying with static axes...")
+        torch.onnx.export(
+            model, 
+            dummy_input, 
+            model_path, 
+            input_names=["input_ids"], 
+            output_names=["output"],
+            opset_version=14
+        )
+    print(f"Exported model to {model_path} and tokenizer to {tokenizer_path}")
+
+if __name__ == "__main__":
+    export_model()
+</file>
+
+<file path="docker-compose.yml">
+services:
+  # 1. TensorZero Gateway
+  gateway:
+    build:
+      context: ..
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./config:/app/config:ro
+      - ./router:/app/router:ro
+    command: --config-file /app/config/tensorzero.toml
+    environment:
+      - TENSORZERO_CLICKHOUSE_URL=http://default:${CLICKHOUSE_PASSWORD}@clickhouse:8123/tensorzero
+      - TENSORZERO_POSTGRES_URL=${DATABASE_URL}
+      # Pass through specific keys from your .env
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY}
+      - SAMBANOVA_API_KEY=${SAMBANOVA_API_KEY}
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: always
+
+  # 2. ClickHouse (Required for metrics/observability)
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    environment:
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_USER=default
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 3. TensorZero UI (Dashboard)
+  ui:
+    image: tensorzero/ui
+    ports:
+      - "4000:4000"
+    environment:
+      - TENSORZERO_GATEWAY_URL=http://gateway:3000
+      - TENSORZERO_CLICKHOUSE_URL=http://default:${CLICKHOUSE_PASSWORD}@clickhouse:8123/tensorzero
+      - TENSORZERO_POSTGRES_URL=${DATABASE_URL}
+    depends_on:
+      - gateway
+    volumes:
+      - ./config:/app/config:ro
+
+  # 4. Ngrok (Expose to internet)
+  ngrok:
+    image: ngrok/ngrok:latest
+    command: http gateway:3000
+    environment:
+      - NGROK_AUTHTOKEN=${NGROK_AUTHTOKEN}
+    ports:
+      - 4040:4040 # Ngrok inspection interface
+    depends_on:
+      - gateway
+
+volumes:
+  clickhouse_data:
+</file>
+
+<file path="gemini.md">
+# TensorZero System Overview
+
+## Architecture
+
+The system is a multi-agent content generation pipeline orchestrated by a TensorZero Gateway. It uses a microservices approach with Docker Compose.
+
+### Components
+
+1. **TensorZero Gateway**: The central router and model manager.
+    * **Port**: 3000
+    * **Config**: `tensorzero-deploy/config/tensorzero.toml`
+    * **Observability**: Connects to ClickHouse for metrics/logs.
+2. **ClickHouse**: Data warehouse for TensorZero observability.
+    * **Port**: 8123 (HTTP), 9000 (Native)
+    * **Volume**: `tensorzero_clickhouse_data`
+
+## Agents
+
+The system defines four specialized agents (as described in `AGENTS.md`):
+
+1. **Manager Agent**:
+    * **Role**: Orchestrator.
+    * **Responsibility**: Breaks down topics into subtasks, assigns work to other agents, and ensures the final output meets quality standards.
+2. **Writer Agent**:
+    * **Role**: Content Creator.
+    * **Responsibility**: Drafts the initial content based on the Manager's outline.
+3. **Editor Agent**:
+    * **Role**: Quality Assurance.
+    * **Responsibility**: Refines the draft, checking for clarity, tone, and grammar.
+4. **Publisher Agent**:
+    * **Role**: Final Output.
+    * **Responsibility**: Formats the content for the target platform (e.g., blog, social media) and handles "publishing" (simulated or API).
+
+## Model Configuration (`tensorzero.toml`)
+
+The Gateway is configured to route requests to a diverse set of LLM providers, utilizing both free and paid tiers, with advanced routing strategies.
+
+### Defined Models
+
+*   **`cerebras_llama70b`**: Uses Cerebras (`llama3.3-70b`) - Instant speed.
+*   **`sambanova_405b`**: Uses SambaNova (`Meta-Llama-3.1-405B-Instruct`) - Massive reasoning.
+*   **`groq_llama33`**: Uses Groq (`llama-3.3-70b-versatile`) - Reliable speed.
+*   **`mistral_large`**: Uses Mistral (`mistral-large-latest`) - High quality.
+*   **`deepseek_v3`**: Uses DeepSeek (`deepseek-chat`) - Best value/logic.
+*   **`qwen_25_together`**: Uses Together AI (`Qwen/Qwen2.5-72B-Instruct-Turbo`) - SOTA open source.
+*   **`gemini_pro`**: Uses Google AI Studio (`gemini-1.5-pro`) - High context (Paid).
+*   **`grok_2`**: Uses xAI (`grok-2-1212`) - Reasoning & knowledge (Paid).
+*   **`liquid_lfm_40b`**: Uses OpenRouter (`liquid/lfm-40b`) - Free MoE.
+*   **`gemini_2_flash_free`**: Uses OpenRouter (`google/gemini-2.0-flash-exp:free`) - Free.
+
+### Functions
+
+*   **`chat`**: The main interface for agent communication.
+    *   **Variants**: `cerebras`, `sambanova`, `groq`, `mistral`, `deepseek`, `gemini_pro`, `grok`, `free_liquid`, `free_gemini`.
+    *   **Experimentation**: Weighted random routing (15% for Cerebras/SambaNova, 10% for others).
+*   **`best_of_n_chat`**: Quality via Rejection Sampling.
+    *   **Mechanism**: Generates 3 drafts with Cerebras (Llama 3.3) and uses SambaNova (Llama 405B) to select the best one.
+*   **`mixture_of_n_chat`**: Quality via Fusion.
+    *   **Mechanism**: Generates 3 drafts (Mistral, DeepSeek, Qwen) and uses Gemini 1.5 Pro to fuse them into one answer.
+
+## Setup & Deployment
+
+*   **Prerequisites**: Docker, Docker Compose, API keys (CEREBRAS, SAMBANOVA, GROQ, MISTRAL, DEEPSEEK, TOGETHER, GEMINI, GROK, OPENROUTER).
+*   **Start**: `docker-compose -f tensorzero-deploy/docker-compose.yml up -d`
+*   **Environment**: API keys are passed via environment variables to the Gateway container.
+</file>
+
+</files>

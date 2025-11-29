@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "quality_score": { "type": "number", "minimum": 1, "maximum": 10 },
+    "rating_label": {
+      "type": "string",
+      "enum": ["EXCELLENT", "GOOD", "FAIR", "POOR"]
+    },
+    "feedback": { "type": "string" },
+    "regenerate_script": { "type": "boolean" },
+    "regenerate_images": { "type": "boolean" }
+  },
+  "required": ["quality_score", "rating_label", "feedback"],
+  "additionalProperties": false
+}

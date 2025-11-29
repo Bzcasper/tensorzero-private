@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "score": {
+      "type": "number",
+      "description": "Quality score from 0.0 to 10.0",
+      "minimum": 0,
+      "maximum": 10
+    },
+    "feedback": {
+      "type": "string",
+      "description": "Constructive feedback on what passed or failed"
+    },
+    "pass": {
+      "type": "boolean",
+      "description": "True if score >= 8.0"
+    }
+  },
+  "required": ["score", "feedback", "pass"],
+  "additionalProperties": false
+}

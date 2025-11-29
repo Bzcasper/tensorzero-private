@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "enhanced_prompts": {
+      "type": "array",
+      "description": "List of enhanced prompts corresponding to the input scenes order",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["enhanced_prompts"],
+  "additionalProperties": false
+}

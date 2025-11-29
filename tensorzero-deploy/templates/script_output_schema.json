@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": [
+    "title",
+    "intro",
+    "materials",
+    "steps",
+    "completion",
+    "thumbnail_prompt"
+  ],
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Catchy YouTube title"
+    },
+    "intro": {
+      "type": "object",
+      "required": ["narration", "image_prompt"],
+      "properties": {
+        "narration": { "type": "string" },
+        "image_prompt": { "type": "string" }
+      }
+    },
+    "materials": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["name", "image_prompt"],
+        "properties": {
+          "name": { "type": "string" },
+          "image_prompt": { "type": "string" }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "required": ["step_number", "title", "narration", "image_prompt"],
+        "properties": {
+          "step_number": { "type": "integer" },
+          "title": { "type": "string" },
+          "narration": { "type": "string" },
+          "image_prompt": { "type": "string" }
+        }
+      }
+    },
+    "completion": {
+      "type": "object",
+      "required": ["narration", "image_prompt"],
+      "properties": {
+        "narration": { "type": "string" },
+        "image_prompt": { "type": "string" }
+      }
+    },
+    "thumbnail_prompt": {
+      "type": "string",
+      "description": "Eye-catching thumbnail image prompt"
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["video_url", "script", "target_duration"],
+  "properties": {
+    "video_url": {
+      "type": "string",
+      "description": "URL of the generated video to evaluate",
+      "format": "uri"
+    },
+    "script": {
+      "type": "object",
+      "description": "The original script used to generate the video",
+      "properties": {
+        "title": { "type": "string" },
+        "scenes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "dialogue": { "type": "string" },
+              "visual_desc": { "type": "string" },
+              "duration_sec": { "type": "integer" }
+            }
+          }
+        },
+        "total_duration_sec": { "type": "integer" }
+      }
+    },
+    "target_duration": {
+      "type": "integer",
+      "description": "Target duration in seconds",
+      "minimum": 60,
+      "maximum": 600
+    }
+  },
+  "additionalProperties": false
+}
