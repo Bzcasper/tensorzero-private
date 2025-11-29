@@ -2,7 +2,7 @@
 bind_address = "0.0.0.0:3000"
 disable_pseudonymous_usage_analytics = true
 
-[router]
+[gateway.router]
 model_path = "../router.onnx"
 tokenizer_path = "../tokenizer.json"
 
