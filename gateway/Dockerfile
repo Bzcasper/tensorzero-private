@@ -42,8 +42,8 @@ USER gateway
 
 
 COPY --from=builder /release/gateway /usr/local/bin/gateway
-COPY tensorzero-deploy/config /app/config
-COPY tensorzero-deploy/templates /app/config/templates
+COPY --from=builder /tensorzero/tensorzero-deploy/config /app/config
+COPY --from=builder /tensorzero/tensorzero-deploy/templates /app/config/templates
 
 
 WORKDIR /app
