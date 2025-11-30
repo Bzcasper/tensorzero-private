@@ -1,0 +1,41 @@
+[package]
+name = "gateway"
+version.workspace = true
+rust-version.workspace = true
+edition = "2021"
+license.workspace = true
+
+[dependencies]
+tensorzero-core = { path = "../tensorzero-core" }
+tensorzero-optimizers = { path = "../tensorzero-optimizers" }
+router-core = { path = "../tensorzero-deploy/router/router-core" }
+axum = { workspace = true }
+tracing = { version = "0.1.40", features = ["log", "release_max_level_debug"] }
+tokio = { workspace = true }
+mimalloc = "0.1.48"
+clap = { workspace = true }
+tower-http = { workspace = true, features = ["metrics"] }
+metrics-exporter-prometheus = { workspace = true }
+http = { workspace = true }
+futures = { workspace = true }
+tokio-stream = { workspace = true }
+tensorzero-auth = { path = "../internal/tensorzero-auth" }
+sqlx = { version = "0.9.0-alpha.1", features = ["sqlx-toml", "postgres", "runtime-tokio", "chrono"] }
+secrecy = { workspace = true }
+
+[lints]
+workspace = true
+
+[features]
+e2e_tests = ["tensorzero-core/e2e_tests"]
+default = []
+
+[dev-dependencies]
+reqwest.workspace = true
+tempfile = "3.21.0"
+tensorzero = { path = "../clients/rust", features = ["e2e_tests"] }
+serde_json = { workspace = true }
+reqwest-eventsource = { workspace = true }
+futures = { workspace = true }
+secrecy = { workspace = true }
+uuid = { workspace = true }
