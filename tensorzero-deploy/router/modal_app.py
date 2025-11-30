@@ -233,7 +233,7 @@ def health():
 
 
 @app.function(
-    image=serve_image, volumes={"/data": volume}, allow_concurrent_inputs=100, keep_warm=2
+    image=serve_image, volumes={"/data": volume}, allow_concurrent_inputs=5, keep_warm=1, cpu=0.25
 )
 @modal.web_server(8080)
 def serve():
