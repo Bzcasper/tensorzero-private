@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import httpx
@@ -13,14 +12,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS for web access
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Configure for your domain in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS disabled for debugging
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["*"],  # Configure for your domain in production
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
 
 
 # Request/Response Models
@@ -66,15 +65,12 @@ async def root():
 
 
 @app.get("/health")
-async def health_check():
-    try:
-        return {
-            "status": "healthy",
-            "version": "1.0.0",
-            "environment": os.getenv("VERCEL_ENV", "local"),
-        }
-    except Exception as e:
-        return {"status": "error", "error": str(e), "version": "1.0.0"}
+def health_check():
+    return {
+        "status": "healthy",
+        "version": "1.0.0",
+        "environment": os.getenv("VERCEL_ENV", "local"),
+    }
 
 
 @app.post("/api/generate_video", response_model=VideoResponse)
