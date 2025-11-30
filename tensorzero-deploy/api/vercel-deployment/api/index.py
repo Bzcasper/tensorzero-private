@@ -67,11 +67,14 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    return {
-        "status": "healthy",
-        "version": "1.0.0",
-        "environment": os.getenv("VERCEL_ENV", "local"),
-    }
+    try:
+        return {
+            "status": "healthy",
+            "version": "1.0.0",
+            "environment": os.getenv("VERCEL_ENV", "local"),
+        }
+    except Exception as e:
+        return {"status": "error", "error": str(e), "version": "1.0.0"}
 
 
 @app.post("/api/generate_video", response_model=VideoResponse)
@@ -132,5 +135,4 @@ async def process_video_generation(job_id: str, request: VideoRequest):
         print(f"[{job_id}] Error: {e}")
 
 
-# Vercel serverless handler
-handler = app
+# Vercel automatically detects the 'app' variable
