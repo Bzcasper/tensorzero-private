@@ -16,19 +16,6 @@
       "dest": "api/index.py"
     }
   ],
-  "env": {
-    "TENSORZERO_URL": "@tensorzero_url",
-    "MEDIA_SERVER_URL": "@media_server_url",
-    "CEREBRAS_API_KEY": "@cerebras_api_key",
-    "GROQ_API_KEY": "@groq_api_key",
-    "SAMBANOVA_API_KEY": "@sambanova_api_key",
-    "MISTRAL_API_KEY": "@mistral_api_key",
-    "DEEPSEEK_API_KEY": "@deepseek_api_key",
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "GROK_API_KEY": "@grok_api_key",
-    "OPENROUTER_API_KEY": "@openrouter_api_key",
-    "TOGETHER_API_KEY": "@together_api_key",
-    "IMAGE_AUTH": "@image_auth"
-  },
+
   "installCommand": "pip install uv && uv pip install --system -r requirements.txt"
 }
