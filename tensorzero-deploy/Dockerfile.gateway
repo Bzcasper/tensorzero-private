@@ -1,0 +1,24 @@
+# Dockerfile for TensorZero Gateway (Rust)
+FROM rust:1.75-slim as builder
+
+WORKDIR /app
+
+# Copy Cargo files
+COPY tensorzero-core/Cargo.toml tensorzero-core/Cargo.lock ./
+
+# Copy source
+COPY tensorzero-core/src ./src
+
+# Build
+RUN cargo build --release
+
+# Runtime image
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/tensorzero-gateway /usr/local/bin/
+
+EXPOSE 3000
+
+CMD ["tensorzero-gateway", "--config-file", "/app/config/tensorzero.toml"]

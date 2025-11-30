@@ -1,0 +1,38 @@
+# Render Deployment Configuration
+# Deploy TensorZero Gateway to Render Free Tier
+
+services:
+  # TensorZero Gateway (Rust)
+  - type: web
+    name: tensorzero-gateway
+    runtime: docker
+    dockerfilePath: ./Dockerfile.gateway
+    envVars:
+      - key: TENSORZERO_CLICKHOUSE_URL
+        value: https://your-clickhouse-instance.clickhouse.cloud:8443/tensorzero
+      - key: CEREBRAS_API_KEY
+        sync: false # Set in Render dashboard
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SAMBANOVA_API_KEY
+        sync: false
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: DEEPSEEK_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROK_API_KEY
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: TOGETHER_API_KEY
+        sync: false
+    healthCheckPath: /health
+    plan: free # 512MB RAM, 750 hours/month
+
+
+# Note: ClickHouse and UI deployed separately for cost optimization
+# - ClickHouse: clickhouse.cloud (free tier)
+# - UI: Vercel (free tier)
+# - Video API: Already on Vercel
