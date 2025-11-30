@@ -224,8 +224,8 @@ services:
     volumes:
       - ./config:/app/config:ro
 
-  # 4. Ngrok (Expose to internet)
-  ngrok:
+  # 4. Ngrok (Expose TensorZero to internet)
+  ngrok-tensorzero:
     image: ngrok/ngrok:latest
     command: http gateway:3000
     environment:
@@ -234,6 +234,15 @@ services:
       - 4040:4040 # Ngrok inspection interface
     depends_on:
       - gateway
+
+  # Alternative: Cloudflare Tunnel (more reliable than ngrok)
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+  #   depends_on:
+  #     - clickhouse
 
 volumes:
   clickhouse_data:

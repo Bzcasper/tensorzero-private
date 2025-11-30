@@ -365,13 +365,14 @@ metric = "video_quality_score"
 candidate_variants = ["claude_sonnet", "gpt4o"]
 epsilon = 0.1 # Exploration parameter
 
-# Neural Router Integration (when router service is available)
-# [functions.script_generator.experimentation]
-# type = "neural_router"
-# router_url = "http://neural-router:8080/route"
-# fallback = "track_and_stop"
-# context = { function_name = "script_generator" }
-# epsilon = 0.1
+# Neural Router Integration (Modal-based)
+[functions.script_generator.experimentation]
+type = "neural_router"
+router_url = "https://bzcasper--video-generation-router-serve-router.modal.run/route"
+fallback = "track_and_stop"
+context = { function_name = "script_generator" }
+timeout_ms = 1000
+epsilon = 0.1
 
 # 2. Prompt Enhancer
 [functions.prompt_enhancer]
@@ -412,10 +413,12 @@ model = "fast_llm"
 system_template = "templates/prompt_enhancer_system_descriptive.minijinja"
 
 [functions.prompt_enhancer.experimentation]
-type = "static_weights" # Standard A/B test (50/50 split)
-[functions.prompt_enhancer.experimentation.candidate_variants]
-cinematic_style = 0.5
-descriptive_style = 0.5
+type = "neural_router"
+router_url = "https://bzcasper--video-generation-router-serve-router.modal.run/route"
+fallback = "static_weights"
+context = { function_name = "prompt_enhancer" }
+timeout_ms = 1000
+epsilon = 0.05
 
 # 3. Video Evaluator (Quality Assurance Judge)
 [functions.video_evaluator]

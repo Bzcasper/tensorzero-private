@@ -1,0 +1,16 @@
+{
+  "total_samples": 5000,
+  "variant_distribution": {
+    "cerebras_fast": 1507,
+    "groq": 2282,
+    "deepseek": 312,
+    "mistral": 602,
+    "sambanova": 297
+  },
+  "quality_stats": {
+    "mean": 0.8952858819797311,
+    "std": 0.058071296024413785,
+    "min": 0.6982682391325921,
+    "max": 1.0
+  }
+}
