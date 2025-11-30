@@ -10,6 +10,7 @@ COPY ../Cargo.toml ../Cargo.lock ./
 COPY ../tensorzero-core/ ./tensorzero-core/
 COPY ../gateway/ ./gateway/
 COPY ../internal/ ./internal/
+COPY ../router/ ./router/
 
 # Build the gateway
 RUN cargo build --release --package gateway
