@@ -30,6 +30,7 @@
     "TOGETHER_API_KEY": "@together_api_key",
     "IMAGE_AUTH": "@image_auth"
   },
+  "installCommand": "pip install uv && uv pip install --system -r requirements.txt",
   "excludeFiles": [
     "**/*.pyc",
     "**/__pycache__/**",
