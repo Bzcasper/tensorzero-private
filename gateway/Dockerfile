@@ -39,10 +39,12 @@ RUN useradd -m -s /bin/bash gateway
 
 USER gateway
 
+
 COPY --from=builder /release/gateway /usr/local/bin/gateway
+COPY tensorzero-deploy/config /app/config
 
 WORKDIR /app
 
 EXPOSE 3000
 
-ENTRYPOINT ["gateway"]
+ENTRYPOINT ["gateway", "--config-file", "/app/config/tensorzero.toml"]
