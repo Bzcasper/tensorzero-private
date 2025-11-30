@@ -1,22 +1,26 @@
-FROM python:3.12-slim
+# Dockerfile for TensorZero Gateway (Rust)
+FROM rust:1.75-slim as builder
 
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+# Copy workspace Cargo files
+COPY Cargo.toml Cargo.lock ./
 
-# Install uv
-RUN pip install uv
+# Copy all workspace members
+COPY tensorzero-core/ ./tensorzero-core/
+COPY gateway/ ./gateway/
+COPY internal/ ./internal/
 
-# Copy project files
-COPY pyproject.toml .
-COPY tensorzero_client.py media_server_client.py agent.py ./
+# Build the gateway
+RUN cargo build --release --package gateway
 
-# Install dependencies
-RUN uv sync --no-install-project
+# Runtime image
+FROM debian:bookworm-slim
 
-# Run the agent
-CMD ["uv", "run", "python", "agent.py"]
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/gateway /usr/local/bin/
+
+EXPOSE 3000
+
+CMD ["gateway", "--config-file", "/app/config/tensorzero.toml"]
