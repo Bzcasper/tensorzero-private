@@ -73,7 +73,7 @@ def health_check():
     }
 
 
-@app.post("/api/generate_video", response_model=VideoResponse)
+@app.post("/api/generate_video")
 async def generate_video(request: VideoRequest, background_tasks: BackgroundTasks):
     """
     Generate DIY video using TensorZero + Fast-Agent workflow
