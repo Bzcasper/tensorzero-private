@@ -6,15 +6,9 @@ members = [
     "tensorzero-core/tests/load/feedback",
     "gateway",
     "internal/tensorzero-node",
-    "clients/rust",
-    "clients/python",
-    "provider-proxy",
-    "evaluations",
-    "tensorzero-optimizers",
     "internal/tensorzero-derive",
     "internal/tensorzero-auth",
     "internal/minijinja-utils",
-    "examples/integrations/cursor/feedback",
 ]
 resolver = "2"
 
