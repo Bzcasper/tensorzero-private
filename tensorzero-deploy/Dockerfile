@@ -4,12 +4,12 @@ FROM rust:1.75-slim as builder
 WORKDIR /app
 
 # Copy workspace Cargo files
-COPY Cargo.toml Cargo.lock ./
+COPY ../Cargo.toml ../Cargo.lock ./
 
 # Copy all workspace members
-COPY tensorzero-core/ ./tensorzero-core/
-COPY gateway/ ./gateway/
-COPY internal/ ./internal/
+COPY ../tensorzero-core/ ./tensorzero-core/
+COPY ../gateway/ ./gateway/
+COPY ../internal/ ./internal/
 
 # Build the gateway
 RUN cargo build --release --package gateway
