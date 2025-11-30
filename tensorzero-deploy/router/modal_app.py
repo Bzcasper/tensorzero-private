@@ -190,7 +190,6 @@ def train_and_save():
 # ====================================================================
 from fastapi import FastAPI
 from pydantic import BaseModel
-import onnxruntime as ort
 
 web_app = FastAPI(title="TensorZero Neural Router")
 
@@ -203,6 +202,8 @@ class RouteRequest(BaseModel):
 
 @web_app.post("/route")
 async def route(req: RouteRequest):
+    import onnxruntime as ort
+
     if not os.path.exists(MODEL_PATH):
         return {"best_variant": "cerebras_fast", "confidence": 0.5}
 
