@@ -20,10 +20,8 @@ serde_json.workspace = true
 url.workspace = true
 uuid.workspace = true
 secrecy.workspace = true
-tensorzero = { path = "../../clients/rust" }
 tensorzero-core = { path = "../../tensorzero-core" }
 tensorzero-auth = { path = "../../internal/tensorzero-auth" }
-evaluations = { path = "../../evaluations" }
 ts-rs = { workspace = true }
 
 [build-dependencies]

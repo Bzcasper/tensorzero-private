@@ -138,7 +138,6 @@ router-core = { path = "../router/router-core" }
 [dev-dependencies]
 tempfile = "3.21.0"
 rand_distr = "0.5.1"
-tensorzero = { path = "../clients/rust", features = ["e2e_tests"] }
 paste = "1.0.15"
 base64 = "0.22.1"
 tensorzero-derive = { path = "../internal/tensorzero-derive" }
