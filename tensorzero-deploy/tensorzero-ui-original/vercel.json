@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "Dockerfile",
+      "use": "@vercel/docker"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "env": {
+    "TENSORZERO_GATEWAY_URL": "@tensorzero_gateway_url",
+    "TENSORZERO_CLICKHOUSE_URL": "@clickhouse_url"
+  }
+}
