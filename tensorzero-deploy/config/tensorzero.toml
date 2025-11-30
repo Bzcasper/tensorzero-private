@@ -324,12 +324,6 @@ model = "cerebras_llama70b"
 temperature = 0.7
 max_tokens = 4096
 
-[functions.script_generator.experimentation]
-type = "static_weights"
-[functions.script_generator.experimentation.candidate_variants]
-grok_creative = 0.7
-cerebras_fast = 0.3
-
 # A/B Testing Variants for Script Generation
 [functions.script_generator.variants.creative_mode]
 type = "chat_completion"
@@ -357,15 +351,7 @@ type = "chat_completion"
 model = "openai::gpt-4o"
 temperature = 0.7
 
-# Use "track_and_stop" to automatically shift traffic to the winner
-# based on the "video_quality_score" metric we defined earlier.
-[functions.script_generator.experimentation]
-type = "track_and_stop"
-metric = "video_quality_score"
-candidate_variants = ["claude_sonnet", "gpt4o"]
-epsilon = 0.1 # Exploration parameter
-
-# Neural Router Integration (Modal-based)
+# Neural Router Integration (Modal-based) with track_and_stop as fallback
 [functions.script_generator.experimentation]
 type = "neural_router"
 router_url = "https://bzcasper--video-generation-router-serve-router.modal.run/route"
@@ -460,32 +446,6 @@ model = "gemini_pro"
 temperature = 0.1
 max_tokens = 1024
 json_mode = "strict"
-
-# 4. Video Evaluator (Quality Assurance Judge)
-[functions.video_evaluator]
-type = "json"
-description = "Strict Video Production Quality Assurance AI"
-system_template = "templates/video_evaluator_system.minijinja"
-user_schema = "templates/video_evaluator_user_schema.json"
-output_schema = "templates/video_evaluator_output_schema.json"
-
-[functions.video_evaluator.variants.gemini_judge]
-type = "chat_completion"
-model = "google_ai_studio_gemini::gemini-1.5-pro" # High reasoning + Vision capable
-temperature = 0.1
-json_mode = "strict"
-
-[functions.video_evaluator.variants.grok_judge]
-type = "chat_completion"
-model = "grok_2"
-temperature = 0.1
-json_mode = "strict"
-
-[functions.video_evaluator.experimentation]
-type = "static_weights"
-[functions.video_evaluator.experimentation.candidate_variants]
-gemini_judge = 0.7
-grok_judge = 0.3
 
 # ==================================================================
 # METRICS FOR QUALITY FEEDBACK & OPTIMIZATION
