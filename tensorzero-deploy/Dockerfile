@@ -1,5 +1,5 @@
 # Dockerfile for TensorZero Gateway (Rust)
-FROM rust:nightly-slim as builder
+FROM rust:nightly as builder
 
 WORKDIR /app
 
