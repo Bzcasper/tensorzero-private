@@ -11,7 +11,6 @@ WORKDIR /src
 FROM chef AS planner
 WORKDIR /app
 COPY . .
-RUN git rev-parse HEAD
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
