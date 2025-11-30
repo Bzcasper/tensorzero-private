@@ -1,16 +1,20 @@
 # Dockerfile for TensorZero Gateway (Rust)
-FROM rust:nightly as builder
+FROM rust:bookworm as builder
+
+# Install nightly toolchain (required by tensorzero)
+RUN rustup default nightly
 
 WORKDIR /app
 
 # Copy workspace Cargo files
-COPY ../Cargo.toml ../Cargo.lock ./
+COPY Cargo.toml Cargo.lock ./
 
 # Copy all workspace members
-COPY ../tensorzero-core/ ./tensorzero-core/
-COPY ../gateway/ ./gateway/
-COPY ../internal/ ./internal/
-COPY ../router/ ./router/
+COPY tensorzero-core/ ./tensorzero-core/
+COPY gateway/ ./gateway/
+COPY internal/ ./internal/
+# Copy router-core to the location expected by tensorzero-core/Cargo.toml
+COPY tensorzero-deploy/router/ ./tensorzero-deploy/router/
 
 # Build the gateway
 RUN cargo build --release --package gateway
